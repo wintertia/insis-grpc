@@ -55,18 +55,19 @@ class InventoryServiceServicer(inventory_pb2_grpc.InventoryServiceServicer):
                 print(f"Item {item_id} not found for bulk update.")
         return inventory_pb2.BulkUpdateResponse(message="Bulk update completed.")
 
-    def MonitorInventory(self, request_iterator, response_observer):
+    def MonitorInventory(self, request_iterator, context):
         monitored_items = set()
         for request in request_iterator:
             item_id = request.item_id
             monitored_items.add(item_id)
-            print(f"Monitoring item: {item_id}")
+            print(f"Server: Monitoring item: {item_id}")
 
         while True:
             for item_id in monitored_items:
                 if item_id in inventory_data:
-                    response_observer.on_next(inventory_pb2.MonitorInventoryResponse(item=inventory_data[item_id]))
-            time.sleep(1) # Check for updates every second
+                    yield inventory_pb2.MonitorInventoryResponse(item=inventory_data[item_id])
+                    print(f"Server: Sending update for item {item_id}: {inventory_data[item_id]}")
+            time.sleep(1)
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))

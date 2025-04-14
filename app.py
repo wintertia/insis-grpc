@@ -6,7 +6,6 @@ import time
 app = Flask(__name__)
 client = InventoryClient()
 
-# Simple CSS (create a static/style.css file)
 CSS = """
 body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; }
 .container { background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
@@ -97,13 +96,14 @@ def monitor_inventory_page():
 @app.route('/start_monitoring', methods=['POST'])
 def start_monitoring():
     item_ids_to_monitor = [int(item_id) for item_id in request.form.getlist('item_ids')]
-    app.monitored_items_data = {}  # Store monitored item data
+    app.monitored_items_data = {}
 
-    def update_inventory(item):
-        app.monitored_items_data[item.item_id] = item
+    def update_inventory(response):
+        print(f"Received update: {response}")
+        app.monitored_items_data[response.item.item_id] = response.item
 
     threading.Thread(target=client.monitor_inventory, args=(item_ids_to_monitor, update_inventory), daemon=True).start()
-    time.sleep(1) # Give some time for the monitoring to start
+    time.sleep(1)
     return redirect(url_for('view_monitored'))
 
 @app.route('/monitored_items')

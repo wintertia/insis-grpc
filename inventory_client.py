@@ -63,4 +63,4 @@ class InventoryClient:
             for item_id in item_ids:
                 yield inventory_pb2.MonitorInventoryRequest(item_id=item_id)
         for response in self.stub.MonitorInventory(request_iterator()):
-            callback(response.item)
+            callback(response)

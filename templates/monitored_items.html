@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monitored Items</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        setTimeout(function() {
+            location.reload();
+        }, 2000); // Reload every 2 seconds to see updates
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Monitored Inventory Items (Real-time Updates)</h2>
+        {% if monitored_items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_id, item in monitored_items.items() %}
+                <tr>
+                    <td>{{ item.item_id }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No items are currently being monitored.</p>
+        {% endif %}
+        <p><a href="{{ url_for('index') }}">Back to Inventory</a> | <a href="{{ url_for('monitor_inventory_page') }}">Change Monitored Items</a></p>
+    </div>
+</body>
+</html>

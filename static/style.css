@@ -1,0 +1,14 @@
+/* static/style.css */
+body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; }
+.container { background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+h1, h2 { color: #333; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #f0f0f0; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+form { margin-top: 20px; }
+label { display: block; margin-bottom: 5px; font-weight: bold; }
+input[type="text"], input[type="number"], button { padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 3px; box-sizing: border-box; }
+button { background-color: #5cb85c; color: white; cursor: pointer; }
+.error { color: red; }
+.success { color: green; }

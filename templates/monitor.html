@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monitor Inventory</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Monitor Inventory</h2>
+        <form method="POST" action="{{ url_for('start_monitoring') }}">
+            <p>Select items to monitor:</p>
+            {% for item in items %}
+            <div>
+                <input type="checkbox" name="item_ids" value="{{ item.item_id }}"> {{ item.name }} (ID: {{ item.item_id }})
+            </div>
+            {% endfor %}
+            <button type="submit">Start Monitoring</button>
+        </form>
+        <p><a href="{{ url_for('index') }}">Back to Inventory</a></p>
+    </div>
+</body>
+</html>

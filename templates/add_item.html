@@ -1,20 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Add Item</title>
+    <title>Add New Item | Inventory Management</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h2>Add New Item</h2>
-        <form method="POST">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required><br><br>
-            <label for="quantity">Quantity:</label>
-            <input type="number" id="quantity" name="quantity" required><br><br>
-            <button type="submit">Add Item</button>
+        <div class="form-header">
+            <h2><i class="fas fa-plus-circle"></i> Add New Item</h2>
+            <p>Fill out the form below to add a new item to your inventory</p>
+        </div>
+        <form method="POST" class="inventory-form">
+            <div class="form-group">
+                <label for="name">
+                    <i class="fas fa-tag"></i> Item Name
+                </label>
+                <input type="text" id="name" name="name" placeholder="Enter item name" required>
+                <div class="input-icon">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="quantity">
+                    <i class="fas fa-boxes"></i> Quantity
+                </label>
+                <input type="number" id="quantity" name="quantity" placeholder="Enter quantity" required>
+                <div class="input-icon">
+                    <i class="fas fa-hashtag"></i>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-save"></i>Add Item
+                </button>
+                <a href="{{ url_for('index') }}" class="btn-back">
+                    <i class="fas fa-arrow-left"></i>Back to Inventory
+                </a>
+            </div>
         </form>
-        <p><a href="{{ url_for('index') }}">Back to Inventory</a></p>
     </div>
 </body>
 </html>

@@ -3,20 +3,85 @@
 <head>
     <title>Monitor Inventory</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h2>Monitor Inventory</h2>
-        <form method="POST" action="{{ url_for('start_monitoring') }}">
-            <p>Select items to monitor:</p>
-            {% for item in items %}
-            <div>
-                <input type="checkbox" name="item_ids" value="{{ item.item_id }}"> {{ item.name }} (ID: {{ item.item_id }})
+        <div class="monitor-header">
+            <h2><i class="fas fa-binoculars"></i> Monitor Inventory</h2>
+            <p>Select items to monitor for stock level changes</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('start_monitoring') }}" class="monitor-form">
+            <div class="selection-panel">
+                <div class="selection-header">
+                    <h3><i class="fas fa-list-check"></i> Available Items</h3>
+                    <div class="select-actions">
+                        <button type="button" class="btn-select-all">
+                            <i class="fas fa-check-square"></i> Select All
+                        </button>
+                        <button type="button" class="btn-deselect-all">
+                            <i class="fas fa-square"></i> Deselect All
+                        </button>
+                    </div>
+                </div>
+
+                <div class="item-grid">
+                    {% for item in items %}
+                    <label class="item-card">
+                        <input type="checkbox" name="item_ids" value="{{ item.item_id }}"> 
+                        <div class="card-content">
+                            <span class="item-name">{{ item.name }}</span>
+                            <span class="item-id">(ID: {{ item.item_id }})</span>
+                            <div class="checkmark">
+                                <i class="fas fa-check"></i>
+                            </div>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
             </div>
-            {% endfor %}
-            <button type="submit">Start Monitoring</button>
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-play-circle"></i> Start Monitoring
+                </button>
+                <a href="{{ url_for('index') }}" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Back to Inventory
+                </a>
+            </div>
         </form>
-        <p><a href="{{ url_for('index') }}">Back to Inventory</a></p>
     </div>
+
+    <script>
+        // Select/Deselect All functionality
+        document.querySelector('.btn-select-all').addEventListener('click', function() {
+            document.querySelectorAll('.item-card input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+                checkbox.parentElement.classList.add('selected');
+            });
+        });
+
+        document.querySelector('.btn-deselect-all').addEventListener('click', function() {
+            document.querySelectorAll('.item-card input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.parentElement.classList.remove('selected');
+            });
+        });
+
+        // toggle selected state when clicking item card
+        document.querySelectorAll('.item-card input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if(this.checked) {
+                    this.parentElement.classList.add('selected');
+                } else {
+                    this.parentElement.classList.remove('selected');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -3,38 +3,88 @@
 <head>
     <title>Monitored Items</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <script>
         setTimeout(function() {
-            location.reload();
+            document.body.classList.add('page-refreshing');
+            setTimeout(function() {
+                location.reload();
+            }, 300);
         }, 2000); // Reload every 2 seconds to see updates
     </script>
 </head>
 <body>
     <div class="container">
-        <h2>Monitored Inventory Items (Real-time Updates)</h2>
+        <div class="monitoring-header">
+            <div class="live-indicator">
+                <span class="pulse-dot"></span>
+                <h2><i class="fas fa-heartbeat"></i> Live Inventory Monitoring</h2>
+            </div>
+            <p class="refresh-info">
+                <i class="fas fa-sync-alt"> Auto-updates every 2 seconds</i>
+            </p>
+        </div>
+
         {% if monitored_items %}
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Quantity</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item_id, item in monitored_items.items() %}
-                <tr>
-                    <td>{{ item.item_id }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.quantity }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="monitoring-container">
+            <div class="stats-summary">
+                <div class="stat-card">
+                    <div class="stat-value">{{ monitored_items|length }}</div>
+                    <div class="stat-label">Items Monitored</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">
+                        {{ monitored_items.values()|sum(attribute='quantity') }}
+                    </div>
+                    <div class="stat-label">Total Quantity</div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="monitored-items-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item_id, item in monitored_items.items() %}
+                        <tr class="monitored-item" data-item-id="{{ item.item_id }}">
+                            <td>{{ item.item_id }}</td>
+                            <td>{{ item.name }}</td>
+                            <td class="quantity-cell">{{ item.quantity }}</td>
+                            <td class="status-cell">
+                                <div class="status-indicator stable">
+                                    <i class="fas fa-check-circle"></i> Stable
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         {% else %}
-        <p>No items are currently being monitored.</p>
+        <div class="empty-state">
+            <i class="fas fa-binoculars empty-icon"></i>
+            <h3>No Items Being Monitored</h3>
+            <p>You haven't selected any items to monitor yet.</p>
+        </div>
         {% endif %}
-        <p><a href="{{ url_for('index') }}">Back to Inventory</a> | <a href="{{ url_for('monitor_inventory_page') }}">Change Monitored Items</a></p>
+
+        <div class="monitoring-actions">
+            <a href="{{ url_for('monitor_inventory_page') }}" class="btn-action">
+                <i class="fas fa-sliders-h"></i>Change Monitored Items
+            </a>
+            <a href="{{ url_for('index') }}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Back to Inventory
+            </a>
+        </div>
     </div>
 </body>
 </html>

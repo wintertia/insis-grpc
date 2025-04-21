@@ -351,87 +351,144 @@
       function checkServiceHealth() {
         fetch("/ping")
           .then((response) => {
-            if (!response.ok) throw new Error("Network response was not ok");
-            return response.text();
+            if (!response.ok) throw new Error("Network error");
+            return response.json();
           })
-          .then(() => {
-            healthIndicator.innerHTML =
-              '<i class="fas fa-check-circle"></i> Service Connected';
-            healthIndicator.className = "health-status healthy";
+          .then((data) => {
+            const health = document.getElementById("service-health");
+            if (data.status === "healthy") {
+              health.innerHTML = `
+                        <i class="fas fa-check-circle"></i> 
+                        Connected (${data.latency_ms}ms)
+                    `;
+              health.className = "health-status healthy";
+            } else {
+              throw new Error(data.error || "Service error");
+            }
           })
           .catch((error) => {
-            healthIndicator.innerHTML =
-              '<i class="fas fa-exclamation-circle"></i> Service Disconnected';
-            healthIndicator.className = "health-status unhealthy";
+            const health = document.getElementById("service-health");
+            health.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Disconnected
+                `;
+            health.className = "health-status unhealthy";
             console.error("Health check failed:", error);
           });
       }
 
       // Send ping request
       // Update the sendPing function
-      // Dalam function sendPing()
-      fetch(`/grpc-ping/${message}/${count}`)
-        .then((response) => {
-          if (!response.ok) {
-            return response.json().then((err) => {
-              throw err;
-            });
-          }
-          return response.json();
-        })
-        .then((data) => {
-          // Pastikan data memiliki struktur yang diharapkan
-          if (!data.message || !data.latency_ms) {
-            throw new Error("Invalid response format");
-          }
+      function sendPing() {
+        const message = document.getElementById("ping-message").value || "ping";
+        const count = document.getElementById("ping-count-input").value || 1;
 
-          const latencyDisplay = `Total: ${data.latency_ms}ms | Server: ${data.server_latency_ms}ms`;
+        pingCount++;
+        updateStats();
 
-          // Update tampilan
-          document.getElementById("response-status").textContent = "Success";
-          document.getElementById("response-message").textContent =
-            data.message;
-          document.getElementById("response-count").textContent = data.count;
-          document.getElementById("response-latency").textContent =
-            latencyDisplay;
-          document.getElementById("response-time").textContent =
-            new Date().toLocaleTimeString();
-          responseContainer.style.display = "block";
+        sendPingButton.disabled = true;
+        sendPingButton.innerHTML =
+          '<i class="fas fa-circle-notch fa-spin"></i> Pinging...';
 
-          // Tambahkan ke history
-          addHistoryRow(
-            startTime,
-            message,
-            count,
-            "Success",
-            `${data.message} (${latencyDisplay})`
-          );
-        })
-        .catch((error) => {
-          // Handle error
-          errorCount++;
-          updateStats();
+        const startTime = new Date();
 
-          const errorMsg = error.error || error.message || "Unknown error";
+        // Use the Flask endpoint that calls the gRPC client
+        fetch(`/grpc-ping/${message}/${count}`)
+          .then((response) => {
+            if (!response.ok) {
+              return response.json().then((err) => {
+                throw err;
+              });
+            }
+            return response.json();
+          })
+          .then((data) => {
+            successCount++;
+            updateStats();
 
-          document.getElementById("response-status").textContent = "Failed";
-          document.getElementById("response-status").className = "error";
-          document.getElementById("response-message").textContent = errorMsg;
-          document.getElementById("response-count").textContent = "N/A";
-          document.getElementById("response-latency").textContent = "N/A";
-          document.getElementById("response-time").textContent =
-            new Date().toLocaleTimeString();
-          responseContainer.style.display = "block";
+            // Format latency display
+            const latencyDisplay = `Client: ${data.latency_ms}ms | Server: ${data.server_latency_ms}ms`;
 
-          addHistoryRow(startTime, message, count, "Failed", errorMsg);
-        });
+            // Display response
+            document.getElementById("response-status").textContent = "Success";
+            document.getElementById("response-status").className = "success";
+            document.getElementById("response-message").textContent =
+              data.message;
+            document.getElementById("response-count").textContent = data.count;
+            document.getElementById("response-latency").textContent =
+              latencyDisplay;
+            document.getElementById("response-time").textContent =
+              new Date().toLocaleTimeString();
+            responseContainer.style.display = "block";
+
+            // Add to history - update this to include latency
+            addHistoryRow(
+              startTime,
+              message,
+              count,
+              "Success",
+              `${data.message} (${latencyDisplay})`
+            );
+
+            // Inside the .then() success handler of sendPing function
+            addHistoryRow(
+              new Date(),
+              message,
+              count,
+              "Success",
+              data.message,
+              `Client: ${data.latency_ms}ms | Server: ${data.server_latency_ms || 0}ms`
+            );
+          })
+          .catch((error) => {
+            errorCount++;
+            updateStats();
+
+            const errorMsg = error.error || error.message || "Unknown error";
+
+            document.getElementById("response-status").textContent = "Failed";
+            document.getElementById("response-status").className = "error";
+            document.getElementById("response-message").textContent = errorMsg;
+            document.getElementById("response-count").textContent = "N/A";
+            document.getElementById("response-time").textContent =
+              new Date().toLocaleTimeString();
+            responseContainer.style.display = "block";
+
+            // Add to history
+            addHistoryRow(startTime, message, count, "Failed", errorMsg);
+
+            // Inside the .catch() error handler of sendPing function
+            addHistoryRow(
+              new Date(),
+              message,
+              count,
+              "Failed",
+              errorMsg,
+              ""
+            );
+          })
+          .finally(() => {
+            sendPingButton.disabled = false;
+            sendPingButton.innerHTML =
+              '<i class="fas fa-paper-plane"></i> Send Ping';
+          });
+      }
 
       // Add row to history table
-      function addHistoryRow(time, message, count, status, response) {
+      function addHistoryRow(
+        time,
+        message,
+        count,
+        status,
+        response,
+        latency = ""
+      ) {
         const row = document.createElement("tr");
 
+        // Create and populate all cells
         const timeCell = document.createElement("td");
-        timeCell.textContent = time.toLocaleTimeString();
+        timeCell.textContent =
+          time instanceof Date ? time.toLocaleTimeString() : time;
 
         const messageCell = document.createElement("td");
         messageCell.textContent = message;
@@ -441,32 +498,31 @@
 
         const statusCell = document.createElement("td");
         statusCell.textContent = status;
-        statusCell.className =
-          status.toLowerCase() === "success" ? "success" : "error";
+        statusCell.className = status === "Success" ? "success" : "error";
 
         const responseCell = document.createElement("td");
-        // Split response and latency for better display
-        const [msg, latency] = response.includes("(")
-          ? response.split("(")
-          : [response, ""];
+        responseCell.textContent = response;
 
-        responseCell.innerHTML = `
-            <div>${msg}</div>
-            <div class="latency">${
-              latency.replace(")", "") || "No latency data"
-            }</div>
-        `;
+        const latencyCell = document.createElement("td");
+        latencyCell.textContent = latency;
 
+        // Append all cells to the row
         row.appendChild(timeCell);
         row.appendChild(messageCell);
         row.appendChild(countCell);
         row.appendChild(statusCell);
         row.appendChild(responseCell);
+        row.appendChild(latencyCell);
 
-        historyBody.insertBefore(row, historyBody.firstChild());
+        // Add the new row at the beginning of the history table
+        if (historyBody.firstChild) {
+          historyBody.insertBefore(row, historyBody.firstChild);
+        } else {
+          historyBody.appendChild(row);
+        }
 
-        // Limit history to 20 entries
-        if (historyBody.children.length > 20) {
+        // Limit history to a reasonable number of entries (e.g., 20)
+        while (historyBody.children.length > 20) {
           historyBody.removeChild(historyBody.lastChild);
         }
       }

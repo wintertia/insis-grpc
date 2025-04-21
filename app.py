@@ -127,10 +127,16 @@ def view_monitored():
 @app.route('/ping')
 def ping():
     try:
-        response, latency = client.ping_pong()  # Unpack the tuple
-        return f"Pong! Message: {response.message}, Count: {response.count}, Latency: {latency}ms"
+        result = client.ping_pong()
+        return jsonify({
+            "status": "healthy",
+            "data": result
+        })
     except Exception as e:
-        return f"Error: {str(e)}", 500
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e)
+        }), 500
 
 
 @app.route('/ping/<message>')
@@ -164,13 +170,17 @@ def health_check():
 @app.route('/grpc-ping/<message>/<int:count>')
 def grpc_ping(message, count):
     try:
-        response, latency = client.ping_pong(message=message, count=count)
-        return jsonify({
+        response = client.ping_pong(message=message, count=count)
+        
+        # Convert gRPC response object to a Python dictionary
+        result = {
             "message": response.message,
             "count": response.count,
-            "latency_ms": latency,
-            "server_latency_ms": response.latency_ms
-        })
+            "latency_ms": getattr(response, "latency_ms", 0),
+            "server_latency_ms": getattr(response, "server_latency_ms", 0)
+        }
+        
+        return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

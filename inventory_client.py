@@ -68,15 +68,20 @@ class InventoryClient:
         for response in self.stub.MonitorInventory(request_iterator()):
             callback(response)
 
+    def ping_pong(self, message="ping", count=1):
+        request = inventory_pb2.PingRequest(message=message, count=count)
+        try:
+            start_time = time.time()
+            response = self.stub.PingPong(request)
+            latency_ms = int((time.time() - start_time) * 1000)
 
-def ping_pong(self, message="ping", count=1):
-    request = inventory_pb2.PingRequest(message=message, count=count)
-    try:
-        start_time = time.time()
-        response = self.stub.PingPong(request)
-        client_latency = int((time.time() - start_time) * 1000)
-        print(f"Round-trip latency: {client_latency}ms")
-        return response, client_latency  # Return both response and latency
-    except grpc.RpcError as e:
-        print(f"PingPong failed: {e.code()}: {e.details()}")
-        raise
+            # Convert protobuf response to serializable dict
+            return {
+                "message": response.message,
+                "count": response.count,
+                "latency_ms": latency_ms,
+                "server_latency_ms": response.latency_ms
+            }
+        except grpc.RpcError as e:
+            print(f"PingPong failed: {e.code()}: {e.details()}")
+            raise

@@ -73,18 +73,16 @@ class InventoryServiceServicer(inventory_pb2_grpc.InventoryServiceServicer):
                         f"Server: Sending update for item {item_id}: {inventory_data[item_id]}")
             time.sleep(1)
 
-
-def PingPong(self, request, context):
-    start_time = time.time()
-    response = inventory_pb2.PongResponse(
-        message=f"Pong for: {request.message}",
-        count=request.count + 1
-    )
-    # Hitung latency dalam milisecond
-    latency_ms = int((time.time() - start_time) * 1000)
-    response.latency_ms = latency_ms
-    print(f"PingPong executed in {latency_ms}ms")
-    return response
+    def PingPong(self, request, context):
+        try:
+            print(f"Received PingPong request: {request.message}")  # Debug log
+            return inventory_pb2.PongResponse(
+                message=f"Pong: {request.message}",
+                count=request.count + 1,
+                latency_ms=0  # Will be updated by client
+            )
+        except Exception as e:
+            context.abort(grpc.StatusCode.INTERNAL, str(e))
 
 
 def serve():

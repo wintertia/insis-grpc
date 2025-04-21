@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, jsonify, render_template, request, redirect, url_for
 from inventory_client import InventoryClient
 import threading
 import time
@@ -22,10 +22,12 @@ button { background-color: #5cb85c; color: white; cursor: pointer; }
 .success { color: green; }
 """
 
+
 @app.route('/')
 def index():
     items = list(client.list_items())
     return render_template('index.html', items=items)
+
 
 @app.route('/item/<int:item_id>')
 def view_item(item_id):
@@ -35,6 +37,7 @@ def view_item(item_id):
     else:
         return render_template('error.html', message=f"Item with ID {item_id} not found.")
 
+
 @app.route('/add', methods=['GET', 'POST'])
 def add_item():
     if request.method == 'POST':
@@ -43,6 +46,7 @@ def add_item():
         new_item = client.add_item(name, quantity)
         return redirect(url_for('index'))
     return render_template('add_item.html')
+
 
 @app.route('/update/<int:item_id>', methods=['GET', 'POST'])
 def update_item(item_id):
@@ -60,6 +64,7 @@ def update_item(item_id):
             return render_template('error.html', message=f"Failed to update item with ID {item_id}.")
     return render_template('update_item.html', item=item)
 
+
 @app.route('/delete/<int:item_id>')
 def delete_item(item_id):
     success = client.delete_item(item_id)
@@ -67,6 +72,7 @@ def delete_item(item_id):
         return redirect(url_for('index'))
     else:
         return render_template('error.html', message=f"Could not delete item with ID {item_id}.")
+
 
 @app.route('/bulk_update', methods=['GET', 'POST'])
 def bulk_update():
@@ -88,27 +94,91 @@ def bulk_update():
     return render_template('bulk_update.html', items=items)
 
 # Bi-Directional Streaming (Monitor Inventory)
+
+
 @app.route('/monitor')
 def monitor_inventory_page():
     items = list(client.list_items())
     return render_template('monitor.html', items=items)
 
+
 @app.route('/start_monitoring', methods=['POST'])
 def start_monitoring():
-    item_ids_to_monitor = [int(item_id) for item_id in request.form.getlist('item_ids')]
+    item_ids_to_monitor = [int(item_id)
+                           for item_id in request.form.getlist('item_ids')]
     app.monitored_items_data = {}
 
     def update_inventory(response):
         print(f"Received update: {response}")
         app.monitored_items_data[response.item.item_id] = response.item
 
-    threading.Thread(target=client.monitor_inventory, args=(item_ids_to_monitor, update_inventory), daemon=True).start()
+    threading.Thread(target=client.monitor_inventory, args=(
+        item_ids_to_monitor, update_inventory), daemon=True).start()
     time.sleep(1)
     return redirect(url_for('view_monitored'))
+
 
 @app.route('/monitored_items')
 def view_monitored():
     return render_template('monitored_items.html', monitored_items=app.monitored_items_data)
+# Add to app.py after the CSS variable
+
+
+@app.route('/ping')
+def ping():
+    try:
+        response, latency = client.ping_pong()  # Unpack the tuple
+        return f"Pong! Message: {response.message}, Count: {response.count}, Latency: {latency}ms"
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
+
+@app.route('/ping/<message>')
+def ping_with_message(message):
+    response = client.ping_pong(message=message)
+    return f"Pong! Message: {response.message}, Count: {response.count}"
+
+
+@app.route('/ping/<message>/<int:count>')
+def ping_with_message_and_count(message, count):
+    response = client.ping_pong(message=message, count=count)
+    return f"Pong! Message: {response.message}, Count: {response.count}"
+
+
+@app.route('/health')
+def health_check():
+    try:
+        response = client.ping_pong("healthcheck")
+        return {
+            "status": "healthy",
+            "grpc_response": response.message,
+            "count": response.count
+        }, 200
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e)
+        }, 500
+
+
+@app.route('/grpc-ping/<message>/<int:count>')
+def grpc_ping(message, count):
+    try:
+        response, latency = client.ping_pong(message=message, count=count)
+        return jsonify({
+            "message": response.message,
+            "count": response.count,
+            "latency_ms": latency,
+            "server_latency_ms": response.latency_ms
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/ping-pong')
+def ping_pong():
+    return render_template('ping_pong.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

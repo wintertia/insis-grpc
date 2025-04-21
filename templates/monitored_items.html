@@ -8,6 +8,27 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <script>
+        // Ping-Pong functionality
+        function checkServiceHealth() {
+            fetch('/ping')
+                .then(response => response.text())
+                .then(data => {
+                    const healthIndicator = document.getElementById('service-health');
+                    healthIndicator.innerHTML = '<i class="fas fa-check-circle"></i> Service Connected';
+                    healthIndicator.className = 'health-status healthy';
+                })
+                .catch(error => {
+                    const healthIndicator = document.getElementById('service-health');
+                    healthIndicator.innerHTML = '<i class="fas fa-exclamation-circle"></i> Service Disconnected';
+                    healthIndicator.className = 'health-status unhealthy';
+                });
+        }
+
+        // Check health on page load and every 10 seconds
+        checkServiceHealth();
+        setInterval(checkServiceHealth, 10000);
+
+        // Auto-refresh for monitoring
         setTimeout(function() {
             document.body.classList.add('page-refreshing');
             setTimeout(function() {
@@ -22,6 +43,9 @@
             <div class="live-indicator">
                 <span class="pulse-dot"></span>
                 <h2><i class="fas fa-heartbeat"></i> Live Inventory Monitoring</h2>
+            </div>
+            <div id="service-health" class="health-status">
+                <i class="fas fa-circle-notch fa-spin"></i> Checking connection...
             </div>
             <p class="refresh-info">
                 <i class="fas fa-sync-alt"> Auto-updates every 2 seconds</i>
@@ -40,6 +64,14 @@
                         {{ monitored_items.values()|sum(attribute='quantity') }}
                     </div>
                     <div class="stat-label">Total Quantity</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">
+                        <a href="/ping" class="ping-link" title="Test Ping-Pong">
+                            <i class="fas fa-network-wired"></i> Ping
+                        </a>
+                    </div>
+                    <div class="stat-label">Connection Test</div>
                 </div>
             </div>
             <div class="table-responsive">

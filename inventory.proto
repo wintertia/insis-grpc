@@ -17,6 +17,9 @@ service InventoryService {
 
   // Bi-Directional Streaming
   rpc MonitorInventory(stream MonitorInventoryRequest) returns (stream MonitorInventoryResponse);
+
+// Add to your InventoryService in inventory.proto
+rpc PingPong (PingRequest) returns (PongResponse);
 }
 
 // Common Data Structures
@@ -84,4 +87,16 @@ message MonitorInventoryRequest {
 
 message MonitorInventoryResponse {
   Item item = 1;
+}
+
+// Add these messages at the bottom of the file
+message PingRequest {
+  string message = 1;
+  int32 count = 2;
+}
+
+message PongResponse {
+  string message = 1;
+  int32 count = 2;
+  int32 latency_ms = 3;
 }

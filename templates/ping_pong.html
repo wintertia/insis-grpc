@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ping-Pong Service Monitor</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+      }
+
+      h1 {
+        margin: 0;
+        color: #2c3e50;
+      }
+
+      .health-status {
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .health-status.healthy {
+        background-color: #e6f7ee;
+        color: #28a745;
+      }
+
+      .health-status.unhealthy {
+        background-color: #fdecea;
+        color: #dc3545;
+      }
+
+      .health-status.checking {
+        background-color: #e7f5ff;
+        color: #1c7ed6;
+      }
+
+      .ping-section {
+        margin-bottom: 30px;
+      }
+
+      .ping-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #4e73df;
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      button:hover {
+        background-color: #3a5ccc;
+      }
+
+      button:disabled {
+        background-color: #95a5a6;
+        cursor: not-allowed;
+      }
+
+      input {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        flex-grow: 1;
+      }
+
+      .response-container {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        border-left: 4px solid #4e73df;
+      }
+
+      .response-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #2c3e50;
+      }
+
+      .response-content {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .response-row {
+        display: flex;
+      }
+
+      .response-label {
+        font-weight: 600;
+        min-width: 100px;
+      }
+
+      .stats {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+
+      .stat-card {
+        flex: 1;
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid #eee;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #4e73df;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        color: #7f8c8d;
+        font-size: 14px;
+      }
+
+      .history {
+        margin-top: 30px;
+      }
+
+      .history-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #2c3e50;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+      }
+
+      th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      tr:hover {
+        background-color: #f5f7fa;
+      }
+
+      .success {
+        color: #28a745;
+      }
+
+      .error {
+        color: #dc3545;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .fa-spin {
+        animation: spin 1s linear infinite;
+      }
+
+      .latency {
+        font-size: 0.8em;
+        color: #666;
+        margin-top: 4px;
+        font-style: italic;
+      }
+
+      .response-latency {
+        font-weight: normal;
+        color: #5c6bc0;
+      }
+
+      .response-latency span {
+        display: inline-block;
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1><i class="fas fa-network-wired"></i> Ping-Pong Service Monitor</h1>
+        <div id="service-health" class="health-status checking">
+          <i class="fas fa-circle-notch fa-spin"></i> Checking connection...
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="ping-count">0</div>
+          <div class="stat-label">Ping Attempts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="success-count">0</div>
+          <div class="stat-label">Successful Pings</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="error-count">0</div>
+          <div class="stat-label">Failed Pings</div>
+        </div>
+      </div>
+
+      <div class="ping-section">
+        <h2>Manual Ping Test</h2>
+        <div class="ping-controls">
+          <input
+            type="text"
+            id="ping-message"
+            placeholder="Enter your message (optional)"
+            value="Hello"
+          />
+          <input
+            type="number"
+            id="ping-count-input"
+            placeholder="Initial count"
+            value="1"
+            min="1"
+          />
+          <button id="send-ping">
+            <i class="fas fa-paper-plane"></i> Send Ping
+          </button>
+        </div>
+
+        <div
+          class="response-container"
+          id="response-container"
+          style="display: none"
+        >
+          <div class="response-title">Last Response</div>
+          <div class="response-content">
+            <div class="response-row">
+              <div class="response-label">Status:</div>
+              <div id="response-status"></div>
+            </div>
+            <div class="response-row">
+              <div class="response-label">Message:</div>
+              <div id="response-message"></div>
+            </div>
+            <div class="response-row">
+              <div class="response-label">Count:</div>
+              <div id="response-count"></div>
+            </div>
+            <div class="response-row">
+              <div class="response-label">Time:</div>
+              <div id="response-time"></div>
+              <div class="response-row">
+                <div class="response-label">Latency:</div>
+                <div id="response-latency"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history">
+        <h2 class="history-title">Ping History</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Message</th>
+              <th>Count</th>
+              <th>Status</th>
+              <th>Response</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <!-- History rows will be added here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      // Stats counters
+      let pingCount = 0;
+      let successCount = 0;
+      let errorCount = 0;
+
+      // DOM elements
+      const healthIndicator = document.getElementById("service-health");
+      const pingCountElement = document.getElementById("ping-count");
+      const successCountElement = document.getElementById("success-count");
+      const errorCountElement = document.getElementById("error-count");
+      const sendPingButton = document.getElementById("send-ping");
+      const responseContainer = document.getElementById("response-container");
+      const historyBody = document.getElementById("history-body");
+
+      // Update stats display
+      function updateStats() {
+        pingCountElement.textContent = pingCount;
+        successCountElement.textContent = successCount;
+        errorCountElement.textContent = errorCount;
+      }
+
+      // Check service health
+      function checkServiceHealth() {
+        fetch("/ping")
+          .then((response) => {
+            if (!response.ok) throw new Error("Network response was not ok");
+            return response.text();
+          })
+          .then(() => {
+            healthIndicator.innerHTML =
+              '<i class="fas fa-check-circle"></i> Service Connected';
+            healthIndicator.className = "health-status healthy";
+          })
+          .catch((error) => {
+            healthIndicator.innerHTML =
+              '<i class="fas fa-exclamation-circle"></i> Service Disconnected';
+            healthIndicator.className = "health-status unhealthy";
+            console.error("Health check failed:", error);
+          });
+      }
+
+      // Send ping request
+      // Update the sendPing function
+      // Dalam function sendPing()
+      fetch(`/grpc-ping/${message}/${count}`)
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((err) => {
+              throw err;
+            });
+          }
+          return response.json();
+        })
+        .then((data) => {
+          // Pastikan data memiliki struktur yang diharapkan
+          if (!data.message || !data.latency_ms) {
+            throw new Error("Invalid response format");
+          }
+
+          const latencyDisplay = `Total: ${data.latency_ms}ms | Server: ${data.server_latency_ms}ms`;
+
+          // Update tampilan
+          document.getElementById("response-status").textContent = "Success";
+          document.getElementById("response-message").textContent =
+            data.message;
+          document.getElementById("response-count").textContent = data.count;
+          document.getElementById("response-latency").textContent =
+            latencyDisplay;
+          document.getElementById("response-time").textContent =
+            new Date().toLocaleTimeString();
+          responseContainer.style.display = "block";
+
+          // Tambahkan ke history
+          addHistoryRow(
+            startTime,
+            message,
+            count,
+            "Success",
+            `${data.message} (${latencyDisplay})`
+          );
+        })
+        .catch((error) => {
+          // Handle error
+          errorCount++;
+          updateStats();
+
+          const errorMsg = error.error || error.message || "Unknown error";
+
+          document.getElementById("response-status").textContent = "Failed";
+          document.getElementById("response-status").className = "error";
+          document.getElementById("response-message").textContent = errorMsg;
+          document.getElementById("response-count").textContent = "N/A";
+          document.getElementById("response-latency").textContent = "N/A";
+          document.getElementById("response-time").textContent =
+            new Date().toLocaleTimeString();
+          responseContainer.style.display = "block";
+
+          addHistoryRow(startTime, message, count, "Failed", errorMsg);
+        });
+
+      // Add row to history table
+      function addHistoryRow(time, message, count, status, response) {
+        const row = document.createElement("tr");
+
+        const timeCell = document.createElement("td");
+        timeCell.textContent = time.toLocaleTimeString();
+
+        const messageCell = document.createElement("td");
+        messageCell.textContent = message;
+
+        const countCell = document.createElement("td");
+        countCell.textContent = count;
+
+        const statusCell = document.createElement("td");
+        statusCell.textContent = status;
+        statusCell.className =
+          status.toLowerCase() === "success" ? "success" : "error";
+
+        const responseCell = document.createElement("td");
+        // Split response and latency for better display
+        const [msg, latency] = response.includes("(")
+          ? response.split("(")
+          : [response, ""];
+
+        responseCell.innerHTML = `
+            <div>${msg}</div>
+            <div class="latency">${
+              latency.replace(")", "") || "No latency data"
+            }</div>
+        `;
+
+        row.appendChild(timeCell);
+        row.appendChild(messageCell);
+        row.appendChild(countCell);
+        row.appendChild(statusCell);
+        row.appendChild(responseCell);
+
+        historyBody.insertBefore(row, historyBody.firstChild());
+
+        // Limit history to 20 entries
+        if (historyBody.children.length > 20) {
+          historyBody.removeChild(historyBody.lastChild);
+        }
+      }
+
+      // Event listeners
+      sendPingButton.addEventListener("click", sendPing);
+
+      // Initialize
+      checkServiceHealth();
+      setInterval(checkServiceHealth, 10000); // Check health every 10 seconds
+      updateStats();
+    </script>
+  </body>
+</html>

@@ -8,6 +8,7 @@ import inventory_pb2_grpc
 inventory_data = {}
 next_item_id = 1
 
+
 class InventoryServiceServicer(inventory_pb2_grpc.InventoryServiceServicer):
     def GetItem(self, request, context):
         item_id = request.item_id
@@ -19,7 +20,8 @@ class InventoryServiceServicer(inventory_pb2_grpc.InventoryServiceServicer):
 
     def AddItem(self, request, context):
         global next_item_id
-        new_item = inventory_pb2.Item(item_id=next_item_id, name=request.name, quantity=request.quantity)
+        new_item = inventory_pb2.Item(
+            item_id=next_item_id, name=request.name, quantity=request.quantity)
         inventory_data[next_item_id] = new_item
         next_item_id += 1
         return inventory_pb2.AddItemResponse(item=new_item)
@@ -50,7 +52,8 @@ class InventoryServiceServicer(inventory_pb2_grpc.InventoryServiceServicer):
             quantity_change = request.quantity_change
             if item_id in inventory_data:
                 inventory_data[item_id].quantity += quantity_change
-                print(f"Updated item {item_id}: Quantity changed by {quantity_change}")
+                print(
+                    f"Updated item {item_id}: Quantity changed by {quantity_change}")
             else:
                 print(f"Item {item_id} not found for bulk update.")
         return inventory_pb2.BulkUpdateResponse(message="Bulk update completed.")
@@ -66,20 +69,37 @@ class InventoryServiceServicer(inventory_pb2_grpc.InventoryServiceServicer):
             for item_id in monitored_items:
                 if item_id in inventory_data:
                     yield inventory_pb2.MonitorInventoryResponse(item=inventory_data[item_id])
-                    print(f"Server: Sending update for item {item_id}: {inventory_data[item_id]}")
+                    print(
+                        f"Server: Sending update for item {item_id}: {inventory_data[item_id]}")
             time.sleep(1)
+
+
+def PingPong(self, request, context):
+    start_time = time.time()
+    response = inventory_pb2.PongResponse(
+        message=f"Pong for: {request.message}",
+        count=request.count + 1
+    )
+    # Hitung latency dalam milisecond
+    latency_ms = int((time.time() - start_time) * 1000)
+    response.latency_ms = latency_ms
+    print(f"PingPong executed in {latency_ms}ms")
+    return response
+
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    inventory_pb2_grpc.add_InventoryServiceServicer_to_server(InventoryServiceServicer(), server)
+    inventory_pb2_grpc.add_InventoryServiceServicer_to_server(
+        InventoryServiceServicer(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     print("gRPC server started on port 50051.")
     try:
         while True:
-            time.sleep(86400) # Keep the server running
+            time.sleep(86400)  # Keep the server running
     except KeyboardInterrupt:
         server.stop(0)
+
 
 if __name__ == '__main__':
     serve()

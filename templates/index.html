@@ -1,51 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Inventory Management</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
     <div class="container">
-        <h1>Inventory</h1>
-        <div class="action-links">
-            <a href="{{ url_for('add_item') }}">Add New Item</a> | 
-            <a href="{{ url_for('bulk_update') }}">Bulk Update</a> | 
-            <a href="{{ url_for('monitor_inventory_page') }}">Monitor Inventory</a>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Quantity</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>{{ item.item_id }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>
-                        <span class="quantity-badge">{{ item.quantity }}</span>
-                    </td>
-                    <td>
-                        <div class="actions">
-                            <a href="{{ url_for('view_item', item_id=item.item_id) }}"><i class="fas fa-eye"></i> View</a> |
-                            <a href="{{ url_for('update_item', item_id=item.item_id) }}"><i class="fas fa-edit"></i> Update</a> |
-                            <a href="{{ url_for('delete_item', item_id=item.item_id) }}" onclick="return confirm('Are you sure?')"><i class="fas fa-trash"></i> Delete</a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+      <h1>Inventory</h1>
+      <div class="action-links">
+        <a href="{{ url_for('add_item') }}">Add New Item</a> |
+        <a href="{{ url_for('bulk_update') }}">Bulk Update</a> |
+        <a href="{{ url_for('monitor_inventory_page') }}">Monitor Inventory</a>
+        |
+        <a href="{{ url_for('ping_pong') }}"
+          ><i class="fas fa-exchange-alt"></i> PingPong Test</a
+        >
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td>{{ item.item_id }}</td>
+            <td>{{ item.name }}</td>
+            <td>
+              <span class="quantity-badge">{{ item.quantity }}</span>
+            </td>
+            <td>
+              <div class="actions">
+                <a href="{{ url_for('view_item', item_id=item.item_id) }}"
+                  ><i class="fas fa-eye"></i> View</a
+                >
+                |
+                <a href="{{ url_for('update_item', item_id=item.item_id) }}"
+                  ><i class="fas fa-edit"></i> Update</a
+                >
+                |
+                <a
+                  href="{{ url_for('delete_item', item_id=item.item_id) }}"
+                  onclick="return confirm('Are you sure?')"
+                  ><i class="fas fa-trash"></i> Delete</a
+                >
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-</body>
+  </body>
 </html>

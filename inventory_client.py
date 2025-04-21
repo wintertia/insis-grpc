@@ -1,6 +1,8 @@
+import time
 import grpc
 import inventory_pb2
 import inventory_pb2_grpc
+
 
 class InventoryClient:
     def __init__(self, host='localhost', port=50051):
@@ -24,7 +26,8 @@ class InventoryClient:
         return response.item
 
     def update_item(self, item_id, name, quantity):
-        item = inventory_pb2.Item(item_id=item_id, name=name, quantity=quantity)
+        item = inventory_pb2.Item(
+            item_id=item_id, name=name, quantity=quantity)
         request = inventory_pb2.UpdateItemRequest(item=item)
         try:
             response = self.stub.UpdateItem(request)
@@ -64,3 +67,16 @@ class InventoryClient:
                 yield inventory_pb2.MonitorInventoryRequest(item_id=item_id)
         for response in self.stub.MonitorInventory(request_iterator()):
             callback(response)
+
+
+def ping_pong(self, message="ping", count=1):
+    request = inventory_pb2.PingRequest(message=message, count=count)
+    try:
+        start_time = time.time()
+        response = self.stub.PingPong(request)
+        client_latency = int((time.time() - start_time) * 1000)
+        print(f"Round-trip latency: {client_latency}ms")
+        return response, client_latency  # Return both response and latency
+    except grpc.RpcError as e:
+        print(f"PingPong failed: {e.code()}: {e.details()}")
+        raise

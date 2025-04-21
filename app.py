@@ -142,13 +142,14 @@ def ping():
 @app.route('/ping/<message>')
 def ping_with_message(message):
     response = client.ping_pong(message=message)
-    return f"Pong! Message: {response.message}, Count: {response.count}"
+    # Use dictionary access
+    return f"Pong! Message: {response['message']}, Count: {response['count']}"
 
 
 @app.route('/ping/<message>/<int:count>')
 def ping_with_message_and_count(message, count):
     response = client.ping_pong(message=message, count=count)
-    return f"Pong! Message: {response.message}, Count: {response.count}"
+    return f"Pong! Message: {response['message']}, Count: {response['count']}"
 
 
 @app.route('/health')
@@ -157,8 +158,8 @@ def health_check():
         response = client.ping_pong("healthcheck")
         return {
             "status": "healthy",
-            "grpc_response": response.message,
-            "count": response.count
+            "grpc_response": response['message'],
+            "count": response['count']
         }, 200
     except Exception as e:
         return {
@@ -170,16 +171,7 @@ def health_check():
 @app.route('/grpc-ping/<message>/<int:count>')
 def grpc_ping(message, count):
     try:
-        response = client.ping_pong(message=message, count=count)
-        
-        # Convert gRPC response object to a Python dictionary
-        result = {
-            "message": response.message,
-            "count": response.count,
-            "latency_ms": getattr(response, "latency_ms", 0),
-            "server_latency_ms": getattr(response, "server_latency_ms", 0)
-        }
-        
+        result = client.ping_pong(message=message, count=count)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

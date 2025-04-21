@@ -28,7 +28,6 @@
 
       .header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
@@ -38,30 +37,6 @@
       h1 {
         margin: 0;
         color: #2c3e50;
-      }
-
-      .health-status {
-        padding: 10px 15px;
-        border-radius: 5px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .health-status.healthy {
-        background-color: #e6f7ee;
-        color: #28a745;
-      }
-
-      .health-status.unhealthy {
-        background-color: #fdecea;
-        color: #dc3545;
-      }
-
-      .health-status.checking {
-        background-color: #e7f5ff;
-        color: #1c7ed6;
       }
 
       .ping-section {
@@ -234,9 +209,6 @@
     <div class="container">
       <div class="header">
         <h1><i class="fas fa-network-wired"></i> Ping-Pong Service Monitor</h1>
-        <div id="service-health" class="health-status checking">
-          <i class="fas fa-circle-notch fa-spin"></i> Checking connection...
-        </div>
       </div>
 
       <div class="stats">
@@ -297,10 +269,10 @@
             <div class="response-row">
               <div class="response-label">Time:</div>
               <div id="response-time"></div>
-              <div class="response-row">
-                <div class="response-label">Latency:</div>
-                <div id="response-latency"></div>
-              </div>
+            </div>
+            <div class="response-row">
+              <div class="response-label">Latency:</div>
+              <div id="response-latency"></div>
             </div>
           </div>
         </div>
@@ -332,7 +304,6 @@
       let errorCount = 0;
 
       // DOM elements
-      const healthIndicator = document.getElementById("service-health");
       const pingCountElement = document.getElementById("ping-count");
       const successCountElement = document.getElementById("success-count");
       const errorCountElement = document.getElementById("error-count");
@@ -347,38 +318,7 @@
         errorCountElement.textContent = errorCount;
       }
 
-      // Check service health
-      function checkServiceHealth() {
-        fetch("/ping")
-          .then((response) => {
-            if (!response.ok) throw new Error("Network error");
-            return response.json();
-          })
-          .then((data) => {
-            const health = document.getElementById("service-health");
-            if (data.status === "healthy") {
-              health.innerHTML = `
-                        <i class="fas fa-check-circle"></i> 
-                        Connected (${data.latency_ms}ms)
-                    `;
-              health.className = "health-status healthy";
-            } else {
-              throw new Error(data.error || "Service error");
-            }
-          })
-          .catch((error) => {
-            const health = document.getElementById("service-health");
-            health.innerHTML = `
-                    <i class="fas fa-exclamation-circle"></i> 
-                    Disconnected
-                `;
-            health.className = "health-status unhealthy";
-            console.error("Health check failed:", error);
-          });
-      }
-
       // Send ping request
-      // Update the sendPing function
       function sendPing() {
         const message = document.getElementById("ping-message").value || "ping";
         const count = document.getElementById("ping-count-input").value || 1;
@@ -421,16 +361,7 @@
               new Date().toLocaleTimeString();
             responseContainer.style.display = "block";
 
-            // Add to history - update this to include latency
-            addHistoryRow(
-              startTime,
-              message,
-              count,
-              "Success",
-              `${data.message} (${latencyDisplay})`
-            );
-
-            // Inside the .then() success handler of sendPing function
+            // Add to history
             addHistoryRow(
               new Date(),
               message,
@@ -455,9 +386,6 @@
             responseContainer.style.display = "block";
 
             // Add to history
-            addHistoryRow(startTime, message, count, "Failed", errorMsg);
-
-            // Inside the .catch() error handler of sendPing function
             addHistoryRow(
               new Date(),
               message,
@@ -530,9 +458,6 @@
       // Event listeners
       sendPingButton.addEventListener("click", sendPing);
 
-      // Initialize
-      checkServiceHealth();
-      setInterval(checkServiceHealth, 10000); // Check health every 10 seconds
       updateStats();
     </script>
   </body>

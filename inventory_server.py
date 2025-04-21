@@ -75,11 +75,15 @@ class InventoryServiceServicer(inventory_pb2_grpc.InventoryServiceServicer):
 
     def PingPong(self, request, context):
         try:
+            start_time = time.time()
+            time.sleep(0.169)  # Simulate some processing delay
+            end_time = time.time()
+            server_latency_ms = int((end_time - start_time) * 1000)  # Calculate 
             print(f"Received PingPong request: {request.message}")  # Debug log
             return inventory_pb2.PongResponse(
                 message=f"Pong: {request.message}",
                 count=request.count + 1,
-                latency_ms=0  # Will be updated by client
+                latency_ms=server_latency_ms
             )
         except Exception as e:
             context.abort(grpc.StatusCode.INTERNAL, str(e))

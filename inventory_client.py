@@ -73,14 +73,18 @@ class InventoryClient:
         try:
             start_time = time.time()
             response = self.stub.PingPong(request)
-            latency_ms = int((time.time() - start_time) * 1000)
+            end_time = time.time()
+            round_trip_time = (end_time - start_time) * 1000
+            server_latency_ms = response.latency_ms
+
+            client_latency_ms = int(round_trip_time - server_latency_ms) # Calculate
 
             # Convert protobuf response to serializable dict
             return {
                 "message": response.message,
                 "count": response.count,
-                "latency_ms": latency_ms,
-                "server_latency_ms": response.latency_ms
+                "latency_ms": client_latency_ms, # client latency
+                "server_latency_ms": server_latency_ms # server latency
             }
         except grpc.RpcError as e:
             print(f"PingPong failed: {e.code()}: {e.details()}")
